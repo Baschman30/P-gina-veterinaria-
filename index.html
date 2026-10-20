@@ -24,7 +24,7 @@
         const db = getFirestore(app);
 
         let currentUserRole = null;
-        let imagenBase64Default = "";
+        let imagenBase64Comprimida = "";
 
         window.entrarComoUsuario = function() {
             currentUserRole = 'usuario';
@@ -85,35 +85,35 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // Comprimir un poco la imagen para que cargue súper rápido en la base de datos
                     const img = new Image();
                     img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
-                        const MAX_WIDTH = 500;
-                        const MAX_HEIGHT = 500;
+                        // Reducimos el tamaño al máximo para que entre perfectamente en la base de datos gratuita
+                        const MAX_SIZE = 300;
                         let width = img.width;
                         let height = img.height;
 
                         if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
+                            if (width > MAX_SIZE) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
                             }
                         } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
+                            if (height > MAX_SIZE) {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
                             }
                         }
                         canvas.width = width;
                         canvas.height = height;
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        imagenBase64Default = canvas.toDataURL('image/jpeg', 0.7);
+                        // Calidad comprimida al 50% para garantizar que no pese nada
+                        imagenBase64Comprimida = canvas.toDataURL('image/jpeg', 0.5);
                         const preview = document.getElementById('fotoPreview');
-                        preview.src = imagenBase64Default;
+                        preview.src = imagenBase64Comprimida;
                         preview.style.display = 'block';
                     }
                 }
@@ -128,7 +128,7 @@
             btnSubmit.disabled = true;
 
             try {
-                const fotoFinal = imagenBase64Default || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=500&q=80';
+                const fotoFinal = imagenBase64Comprimida || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=500&q=80';
 
                 const nuevaMascota = {
                     tenencia: document.getElementById('tipoTenencia').value,
@@ -148,14 +148,14 @@
                 alert('¡Mascota registrada y guardada en la nube con éxito!');
                 document.getElementById('mascotaForm').reset();
                 document.getElementById('fotoPreview').style.display = 'none';
-                imagenBase64Default = "";
+                imagenBase64Comprimida = "";
                 setTenencia('Dueño en Casa');
 
                 switchSection('catalogo', document.querySelectorAll('nav button.nav-btn')[1]);
                 cargarMascotas();
             } catch (error) {
                 console.error("Error al guardar: ", error);
-                alert("Hubo un error al registrar la mascota. Revisa tu conexión.");
+                alert("Error: La imagen es muy pesada o hubo un problema de conexión. Intenta con otra foto.");
             } finally {
                 btnSubmit.innerText = "Guardar y Registrar Mascota";
                 btnSubmit.disabled = false;
