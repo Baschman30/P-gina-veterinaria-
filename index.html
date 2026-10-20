@@ -6,11 +6,10 @@
     <title>Huellas Conectadas - Osorno</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- SDKs de Firebase -->
+    <!-- SDK de Firebase Firestore -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDNJqtzo_8SWmuWzxuueYryCitGlbk5b24",
@@ -23,10 +22,8 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const storage = getStorage(app);
 
         let currentUserRole = null;
-        let selectedFile = null;
 
         window.entrarComoUsuario = function() {
             currentUserRole = 'usuario';
@@ -82,34 +79,15 @@
             }
         }
 
-        window.previewFoto = function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                selectedFile = file;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.getElementById('fotoPreview');
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
         window.guardarMascota = async function(event) {
             event.preventDefault();
             const btnSubmit = document.querySelector('.btn-submit');
-            btnSubmit.innerText = "Subiendo a la nube...";
+            btnSubmit.innerText = "Guardando en la nube...";
             btnSubmit.disabled = true;
 
             try {
-                let fotoUrl = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=500&q=80';
-
-                if (selectedFile) {
-                    const storageRef = ref(storage, 'mascotas/' + Date.now() + '_' + selectedFile.name);
-                    await uploadBytes(storageRef, selectedFile);
-                    fotoUrl = await getDownloadURL(storageRef);
-                }
+                const fotoInputVal = document.getElementById('fotoUrl').value.trim();
+                const fotoUrl = fotoInputVal !== "" ? fotoInputVal : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=500&q=80';
 
                 const nuevaMascota = {
                     tenencia: document.getElementById('tipoTenencia').value,
@@ -128,8 +106,6 @@
 
                 alert('¡Mascota registrada y guardada en la nube con éxito!');
                 document.getElementById('mascotaForm').reset();
-                document.getElementById('fotoPreview').style.display = 'none';
-                selectedFile = null;
                 setTenencia('Dueño en Casa');
 
                 switchSection('catalogo', document.querySelectorAll('nav button.nav-btn')[1]);
@@ -176,7 +152,7 @@
                 card.className = 'animal-card';
                 card.innerHTML = `
                     <div class="card-img-container">
-                        <img src="${m.foto}" alt="${m.nombre}">
+                        <img src="${m.foto}" alt="${m.nombre}" onerror="this.src='https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=500&q=80'">
                     </div>
                     <div class="card-body">
                         <h4 class="card-title">${m.nombre}</h4>
@@ -310,10 +286,6 @@
 
         .sub-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
 
-        .photo-upload-box { border: 2px dashed var(--teal); background: #f0fdf9; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; }
-        .photo-upload-box input[type="file"] { display: none; }
-        #fotoPreview { max-width: 180px; max-height: 150px; border-radius: 10px; margin-top: 12px; display: none; object-fit: cover; }
-
         .btn-submit { background-color: var(--accent); color: white; border: none; padding: 14px; font-size: 1.1rem; font-weight: 800; border-radius: 12px; cursor: pointer; margin-top: 10px; font-family: inherit; }
         .btn-submit:hover { background-color: var(--accent-hover); }
 
@@ -427,13 +399,9 @@
                     </div>
 
                     <div class="form-group full-width">
-                        <label>Fotografía de la Mascota</label>
-                        <div class="photo-upload-box" onclick="document.getElementById('fotoInput').click()">
-                            <span>📷 Toca aquí para subir la foto desde tu dispositivo</span>
-                            <input type="file" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
-                            <br>
-                            <img id="fotoPreview" alt="Vista previa">
-                        </div>
+                        <label>Enlace de la Foto (URL de internet)</label>
+                        <input type="url" id="fotoUrl" placeholder="Pega aquí el link de una imagen (opcional)">
+                        <small style="color: var(--muted); margin-top: 5px; display: block;">Si lo dejas en blanco, se asignará una foto por defecto automáticamente.</small>
                     </div>
 
                     <button type="submit" class="btn-submit full-width">Guardar y Registrar Mascota</button>
