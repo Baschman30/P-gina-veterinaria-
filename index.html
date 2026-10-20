@@ -24,6 +24,7 @@
         const db = getFirestore(app);
 
         let currentUserRole = null;
+        let imagenBase64Default = "";
 
         window.entrarComoUsuario = function() {
             currentUserRole = 'usuario';
@@ -79,6 +80,47 @@
             }
         }
 
+        window.previewFoto = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Comprimir un poco la imagen para que cargue súper rápido en la base de datos
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const MAX_WIDTH = 500;
+                        const MAX_HEIGHT = 500;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        imagenBase64Default = canvas.toDataURL('image/jpeg', 0.7);
+                        const preview = document.getElementById('fotoPreview');
+                        preview.src = imagenBase64Default;
+                        preview.style.display = 'block';
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
         window.guardarMascota = async function(event) {
             event.preventDefault();
             const btnSubmit = document.querySelector('.btn-submit');
@@ -86,8 +128,7 @@
             btnSubmit.disabled = true;
 
             try {
-                const fotoInputVal = document.getElementById('fotoUrl').value.trim();
-                const fotoUrl = fotoInputVal !== "" ? fotoInputVal : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=500&q=80';
+                const fotoFinal = imagenBase64Default || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=500&q=80';
 
                 const nuevaMascota = {
                     tenencia: document.getElementById('tipoTenencia').value,
@@ -98,7 +139,7 @@
                     propietario: document.getElementById('propietario').value || 'No aplica',
                     telefono: document.getElementById('telefono').value || 'No aplica',
                     referenciaComun: document.getElementById('referenciaComun').value || 'No aplica',
-                    foto: fotoUrl,
+                    foto: fotoFinal,
                     createdAt: Date.now()
                 };
 
@@ -106,13 +147,15 @@
 
                 alert('¡Mascota registrada y guardada en la nube con éxito!');
                 document.getElementById('mascotaForm').reset();
+                document.getElementById('fotoPreview').style.display = 'none';
+                imagenBase64Default = "";
                 setTenencia('Dueño en Casa');
 
                 switchSection('catalogo', document.querySelectorAll('nav button.nav-btn')[1]);
                 cargarMascotas();
             } catch (error) {
                 console.error("Error al guardar: ", error);
-                alert("Hubo un error al registrar la mascota.");
+                alert("Hubo un error al registrar la mascota. Revisa tu conexión.");
             } finally {
                 btnSubmit.innerText = "Guardar y Registrar Mascota";
                 btnSubmit.disabled = false;
@@ -286,6 +329,10 @@
 
         .sub-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
 
+        .photo-upload-box { border: 2px dashed var(--teal); background: #f0fdf9; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; }
+        .photo-upload-box input[type="file"] { display: none; }
+        #fotoPreview { max-width: 180px; max-height: 150px; border-radius: 10px; margin-top: 12px; display: none; object-fit: cover; }
+
         .btn-submit { background-color: var(--accent); color: white; border: none; padding: 14px; font-size: 1.1rem; font-weight: 800; border-radius: 12px; cursor: pointer; margin-top: 10px; font-family: inherit; }
         .btn-submit:hover { background-color: var(--accent-hover); }
 
@@ -399,9 +446,13 @@
                     </div>
 
                     <div class="form-group full-width">
-                        <label>Enlace de la Foto (URL de internet)</label>
-                        <input type="url" id="fotoUrl" placeholder="Pega aquí el link de una imagen (opcional)">
-                        <small style="color: var(--muted); margin-top: 5px; display: block;">Si lo dejas en blanco, se asignará una foto por defecto automáticamente.</small>
+                        <label>Fotografía de la Mascota</label>
+                        <div class="photo-upload-box" onclick="document.getElementById('fotoInput').click()">
+                            <span>📷 Toca aquí para tomar una foto o subir desde tu dispositivo</span>
+                            <input type="file" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
+                            <br>
+                            <img id="fotoPreview" alt="Vista previa">
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-submit full-width">Guardar y Registrar Mascota</button>
