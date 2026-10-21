@@ -5,246 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Huellas Conectadas - Osorno</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- SDK de Firebase Firestore -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDNJqtzo_8SWmuWzxuueYryCitGlbk5b24",
-            authDomain: "pagina-veterinaria-ee233.firebaseapp.com",
-            projectId: "pagina-veterinaria-ee233",
-            storageBucket: "pagina-veterinaria-ee233.firebasestorage.app",
-            messagingSenderId: "239669122054",
-            appId: "1:239669122054:web:9617718c4dd5abfdf6df87"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        let currentUserRole = null;
-        let imagenBase64Comprimida = "";
-
-        window.entrarComoUsuario = function() {
-            currentUserRole = 'usuario';
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainHeader').style.display = 'flex';
-            document.getElementById('mainContainer').style.display = 'block';
-            document.getElementById('roleBadge').innerText = 'Vecino / Usuario';
-            cargarMascotas();
-        }
-
-        window.mostrarLoginAdmin = function() {
-            const form = document.getElementById('adminLoginForm');
-            form.style.display = form.style.display === 'block' ? 'none' : 'block';
-        }
-
-        window.verificarAdmin = function() {
-            const pass = document.getElementById('adminPassword').value;
-            if (pass === "admin123") {
-                currentUserRole = 'admin';
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('mainHeader').style.display = 'flex';
-                document.getElementById('mainContainer').style.display = 'block';
-                document.getElementById('roleBadge').innerText = 'Administrador';
-                cargarMascotas();
-            } else {
-                document.getElementById('loginError').style.display = 'block';
-            }
-        }
-
-        window.cerrarSesion = function() {
-            location.reload();
-        }
-
-        window.switchSection = function(sectionId, btnElement) {
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-            document.getElementById('section-' + sectionId).classList.add('active');
-            document.querySelectorAll('nav button.nav-btn').forEach(btn => btn.classList.remove('active'));
-            if(btnElement) btnElement.classList.add('active');
-        }
-
-        window.setTenencia = function(tipo) {
-            document.getElementById('tipoTenencia').value = tipo;
-            if (tipo === 'Dueño en Casa') {
-                document.getElementById('optCasa').classList.add('active');
-                document.getElementById('optComunitario').classList.remove('active');
-                document.getElementById('camposDueño').style.display = 'grid';
-                document.getElementById('camposComunitario').style.display = 'none';
-            } else {
-                document.getElementById('optComunitario').classList.add('active');
-                document.getElementById('optCasa').classList.remove('active');
-                document.getElementById('camposDueño').style.display = 'none';
-                document.getElementById('camposComunitario').style.display = 'grid';
-            }
-        }
-
-        window.previewFoto = function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const MAX_SIZE = 300;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_SIZE) {
-                                height *= MAX_SIZE / width;
-                                width = MAX_SIZE;
-                            }
-                        } else {
-                            if (height > MAX_SIZE) {
-                                width *= MAX_SIZE / height;
-                                height = MAX_SIZE;
-                            }
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        imagenBase64Comprimida = canvas.toDataURL('image/jpeg', 0.5);
-                        const preview = document.getElementById('fotoPreview');
-                        preview.src = imagenBase64Comprimida;
-                        preview.style.display = 'block';
-                    }
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        window.guardarMascota = async function(event) {
-            event.preventDefault();
-            const btnSubmit = document.querySelector('.btn-submit');
-            btnSubmit.innerText = "Guardando en la nube...";
-            btnSubmit.disabled = true;
-
-            try {
-                const fotoFinal = imagenBase64Comprimida || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=500&q=80';
-
-                const nuevaMascota = {
-                    tenencia: document.getElementById('tipoTenencia').value,
-                    nombre: document.getElementById('nombre').value,
-                    tipo: document.getElementById('tipo').value,
-                    raza: document.getElementById('raza').value || 'No especificada',
-                    sector: document.getElementById('sector').value,
-                    propietario: document.getElementById('propietario').value || 'No aplica',
-                    telefono: document.getElementById('telefono').value || 'No aplica',
-                    referenciaComun: document.getElementById('referenciaComun').value || 'No aplica',
-                    foto: fotoFinal,
-                    createdAt: Date.now()
-                };
-
-                await addDoc(collection(db, "mascotas"), nuevaMascota);
-
-                alert('¡Mascota registrada y guardada en la nube con éxito!');
-                document.getElementById('mascotaForm').reset();
-                document.getElementById('fotoPreview').style.display = 'none';
-                imagenBase64Comprimida = "";
-                setTenencia('Dueño en Casa');
-
-                switchSection('catalogo', document.querySelectorAll('nav button.nav-btn')[1]);
-                cargarMascotas();
-            } catch (error) {
-                console.error("Error al guardar: ", error);
-                alert("Error al registrar la mascota.");
-            } finally {
-                btnSubmit.innerText = "Guardar y Registrar Mascota";
-                btnSubmit.disabled = false;
-            }
-        }
-
-        let listaMascotasGlobal = [];
-
-        async function cargarMascotas() {
-            const grid = document.getElementById('animalsGrid');
-            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 2rem;">Cargando mascotas desde la nube...</p>';
-            
-            try {
-                const querySnapshot = await getDocs(collection(db, "mascotas"));
-                listaMascotasGlobal = [];
-                querySnapshot.forEach((docSnap) => {
-                    listaMascotasGlobal.push({ id: docSnap.id, ...docSnap.data() });
-                });
-                renderizarMascotas(listaMascotasGlobal);
-            } catch (error) {
-                console.error("Error cargando mascotas: ", error);
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: 2rem;">Error al cargar las mascotas.</p>';
-            }
-        }
-
-        window.renderizarMascotas = function(lista) {
-            const grid = document.getElementById('animalsGrid');
-            grid.innerHTML = '';
-
-            if (lista.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 2rem;">No hay mascotas registradas todavía.</p>';
-                return;
-            }
-
-            lista.forEach(m => {
-                const card = document.createElement('div');
-                card.className = 'animal-card';
-                card.innerHTML = `
-                    <div class="card-img-container">
-                        <img src="${m.foto}" alt="${m.nombre}" onerror="this.src='https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=500&q=80'">
-                    </div>
-                    <div class="card-body">
-                        <h4 class="card-title">${m.nombre}</h4>
-                        <div class="card-tags">
-                            <span class="tag tag-tipo">${m.tipo}</span>
-                            <span class="tag tag-tenencia">${m.tenencia}</span>
-                        </div>
-                        <div class="card-info"><strong>Raza:</strong> ${m.raza}</div>
-                        <div class="card-info"><strong>Sector:</strong> ${m.sector}</div>
-                        ${m.tenencia === 'Dueño en Casa' ? 
-                            `<div class="card-info"><strong>Dueño:</strong> ${m.propietario}</div>
-                             <div class="card-info"><strong>Teléfono:</strong> ${m.telefono}</div>` :
-                            `<div class="card-info"><strong>Ref:</strong> ${m.referenciaComun}</div>`
-                        }
-                        <div class="card-actions">
-                            ${currentUserRole === 'admin' ? `<button class="btn-card btn-delete" onclick="eliminarMascota('${m.id}')">Eliminar</button>` : ''}
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        window.filtrarMascotas = function() {
-            const texto = document.getElementById('searchNombre').value.toLowerCase();
-            const tipo = document.getElementById('filterTipo').value;
-            const sector = document.getElementById('filterSector').value.toLowerCase();
-
-            const filtradas = listaMascotasGlobal.filter(m => {
-                const matchNombre = m.nombre.toLowerCase().includes(texto);
-                const matchTipo = tipo === "" || m.tipo === tipo;
-                const matchSector = m.sector.toLowerCase().includes(sector);
-                return matchNombre && matchTipo && matchSector;
-            });
-
-            renderizarMascotas(filtradas);
-        }
-
-        window.eliminarMascota = async function(id) {
-            if (confirm('¿Estás seguro de eliminar este registro de la nube?')) {
-                try {
-                    await deleteDoc(doc(db, "mascotas", id));
-                    cargarMascotas();
-                } catch (error) {
-                    console.error("Error al eliminar: ", error);
-                    alert("No se pudo eliminar el registro.");
-                }
-            }
-        }
-    </script>
-
     <style>
         :root {
             --primary: #1e3d59;
@@ -252,6 +12,8 @@
             --accent-hover: #e55b2d;
             --teal: #17b890;
             --danger: #e74c3c;
+            --warning-bg: #fff8e6;
+            --warning-border: #f39c12;
             --bg: #f5f7fa;
             --card-bg: #ffffff;
             --text: #2c3e50;
@@ -259,233 +21,295 @@
         }
 
         * { box-sizing: border-box; }
-        body { font-family: 'Nunito', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
 
-        .brand-logo { display: flex; align-items: center; gap: 10px; user-select: none; }
+        /* --- LOGO HUELLAS CONECTADAS --- */
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+        }
         .paw-badge {
-            position: relative; background: var(--accent); color: white; padding: 8px 16px 8px 42px;
-            border-radius: 30px; font-weight: 800; font-size: 1.3rem; display: flex; align-items: center;
+            position: relative;
+            background: var(--accent);
+            color: white;
+            padding: 8px 16px 8px 42px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
             box-shadow: 0 4px 10px rgba(255, 110, 64, 0.35);
+            display: flex;
+            align-items: center;
         }
-        .paw-badge svg { position: absolute; left: 10px; width: 26px; height: 26px; fill: white; transform: rotate(-15deg); }
-        .brand-conectadas { font-size: 1.4rem; font-weight: 800; color: var(--teal); }
+        .paw-badge svg {
+            position: absolute;
+            left: 10px;
+            width: 26px;
+            height: 26px;
+            fill: white;
+            transform: rotate(-15deg);
+        }
+        .brand-conectadas {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--teal);
+            letter-spacing: 0.5px;
+        }
 
+        /* --- PANTALLA DE INICIO (ENFOCADA EN EL USUARIO) --- */
         #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #1e3d59 0%, #2b5876 100%);
-            display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
         }
+
+        /* Botón sobrio Administrador en esquina superior derecha */
+        .top-right-admin {
+            position: absolute;
+            top: 22px;
+            right: 28px;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 7px 15px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .top-right-admin:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Engranaje discreto en esquina inferior derecha */
+        .bottom-right-gear {
+            position: absolute;
+            bottom: 22px;
+            right: 28px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.35);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+        }
+        .bottom-right-gear:hover {
+            color: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(45deg);
+        }
+        .bottom-right-gear svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
         .login-card {
-            background: white; width: 100%; max-width: 440px; padding: 35px 30px;
-            border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); text-align: center;
+            background: white;
+            width: 100%;
+            max-width: 440px;
+            padding: 40px 32px;
+            border-radius: 22px;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.32);
+            text-align: center;
         }
-        .login-card .brand-logo { justify-content: center; margin-bottom: 10px; }
-        .login-subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 25px; }
+        .login-card .brand-logo {
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+        .login-subtitle {
+            color: var(--muted);
+            font-size: 0.98rem;
+            line-height: 1.5;
+            margin-bottom: 28px;
+        }
         .role-btn {
-            width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1.05rem;
-            font-weight: 700; cursor: pointer; margin-bottom: 12px; font-family: inherit; transition: transform 0.15s;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.08rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            font-family: inherit;
         }
         .role-btn:hover { transform: translateY(-2px); }
-        .btn-user-entry { background: var(--teal); color: white; box-shadow: 0 4px 12px rgba(23, 184, 144, 0.3); }
-        .btn-admin-entry { background: #eef2f7; color: var(--primary); border: 2px solid #dce4ec; }
-        #adminLoginForm { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: left; }
-        #adminLoginForm input { width: 100%; margin-bottom: 12px; padding: 12px; border: 1px solid #ccd6e0; border-radius: 8px; font-family: inherit; }
-        .error-msg { color: var(--danger); font-size: 0.85rem; font-weight: 700; display: none; margin-bottom: 10px; }
+        .btn-user-entry {
+            background: var(--teal);
+            color: white;
+            box-shadow: 0 6px 16px rgba(23, 184, 144, 0.35);
+        }
 
+        .login-subform {
+            display: none;
+            text-align: left;
+            margin-top: 10px;
+        }
+        .login-subform h4 {
+            margin: 0 0 14px 0;
+            color: var(--primary);
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        .login-subform input {
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 11px 13px;
+            border: 1.5px solid #ccd6e0;
+            border-radius: 9px;
+            font-family: inherit;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .back-link:hover { color: var(--primary); }
+
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: none;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        /* --- HEADER Y NAVEGACIÓN --- */
         header {
-            background-color: var(--primary); color: white; padding: 1rem 2rem;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         nav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         nav button.nav-btn {
-            background: rgba(255,255,255,0.08); border: none; color: white; font-size: 0.95rem;
-            font-weight: 700; cursor: pointer; padding: 10px 16px; border-radius: 10px; font-family: inherit;
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 10px 16px;
+            border-radius: 10px;
+            transition: background 0.2s;
+            font-family: inherit;
         }
-        nav button.nav-btn:hover, nav button.nav-btn.active { background-color: var(--accent); }
-        .role-badge { background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
-        .btn-logout { background: transparent; border: 1px solid rgba(255,255,255,0.4); color: white; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+        nav button.nav-btn:hover, nav button.nav-btn.active {
+            background-color: var(--accent);
+        }
+        .role-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .btn-logout {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 7px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.15); }
 
+        /* --- CONTENEDOR PRINCIPAL --- */
         .container { max-width: 1050px; margin: 2rem auto; padding: 0 1rem; }
-        .section { display: none; background: var(--card-bg); padding: 2.2rem; border-radius: 16px; box-shadow: 0 8px 24px rgba(149, 157, 165, 0.12); }
-        .section.active { display: block; }
-        h3.section-title { margin-top: 0; color: var(--primary); font-size: 1.5rem; border-bottom: 2px solid #f0f4f8; padding-bottom: 12px; margin-bottom: 24px; }
-
-        .tenencia-selector { grid-column: 1 / -1; display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
-        .tenencia-option {
-            flex: 1; min-width: 220px; border: 2px solid #dce4ec; border-radius: 12px;
-            padding: 14px; text-align: center; cursor: pointer; font-weight: 800; color: var(--primary); background: #f8fafc;
+        .section {
+            display: none;
+            background: var(--card-bg);
+            padding: 2.2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(149, 157, 165, 0.12);
         }
-        .tenencia-option.active { border-color: var(--teal); background: #e6fcf5; color: #0b725b; box-shadow: 0 4px 12px rgba(23, 184, 144, 0.15); }
+        .section.active { display: block; }
+        h3.section-title {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.5rem;
+            border-bottom: 2px solid #f0f4f8;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+        }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
+        /* --- SELECTOR DE CONDICIÓN (CASA VS COMUNITARIO) --- */
+        .tenencia-selector {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .tenencia-option {
+            flex: 1;
+            min-width: 220px;
+            border: 2px solid #dce4ec;
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 800;
+            color: var(--primary);
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+        .tenencia-option.active {
+            border-color: var(--teal);
+            background: #e6fcf5;
+            color: #0b725b;
+            box-shadow: 0 4px 12px rgba(23, 184, 144, 0.15);
+        }
+
+        /* --- FORMULARIOS --- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.2rem;
+        }
         .full-width { grid-column: 1 / -1; }
         .form-group { display: flex; flex-direction: column; }
         label { margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: var(--primary); }
-        input, select, textarea { padding: 11px 14px; border: 1.5px solid #dce4ec; border-radius: 10px; font-size: 0.95rem; font-family: inherit; }
-        input:focus, select:focus { outline: none; border-color: var(--accent); }
-
-        .sub-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
-
-        .photo-upload-box { border: 2px dashed var(--teal); background: #f0fdf9; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; }
-        .photo-upload-box input[type="file"] { display: none; }
-        #fotoPreview { max-width: 180px; max-height: 150px; border-radius: 10px; margin-top: 12px; display: none; object-fit: cover; }
-
-        .btn-submit { background-color: var(--accent); color: white; border: none; padding: 14px; font-size: 1.1rem; font-weight: 800; border-radius: 12px; cursor: pointer; margin-top: 10px; font-family: inherit; }
-        .btn-submit:hover { background-color: var(--accent-hover); }
-
-        .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 25px; background: #f8fafc; padding: 15px; border-radius: 12px; }
-        .animals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .animal-card { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); border: 1px solid #edf2f7; display: flex; flex-direction: column; }
-        .card-img-container { width: 100%; height: 200px; background: #e2e8f0; position: relative; }
-        .card-img-container img { width: 100%; height: 100%; object-fit: cover; }
-        .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
-        .card-title { font-size: 1.2rem; font-weight: 800; color: var(--primary); margin: 0 0 8px 0; }
-        .card-info { font-size: 0.9rem; color: var(--muted); margin-bottom: 6px; }
-        .card-info strong { color: var(--text); }
-        .card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
-        .tag { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
-        .tag-tipo { background: #e0f2fe; color: #0369a1; }
-        .tag-tenencia { background: #fef3c7; color: #92400e; }
-        .card-actions { margin-top: auto; padding-top: 12px; }
-        .btn-delete { width: 100%; background: #fee2e2; color: var(--danger); padding: 8px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; }
-    </style>
-</head>
-<body>
-
-    <div id="loginOverlay">
-        <div class="login-card">
-            <div class="brand-logo">
-                <div class="paw-badge">
-                    <svg viewBox="0 0 24 24"><path d="M12,3C7.58,3 4,6.58 4,11C4,14.5 6.33,17.5 9.5,18.5C9.33,17.8 9.2,17 9.2,16.2C9.2,13.8 11.2,11.8 13.6,11.8C16,11.8 18,13.8 18,16.2C18,17 17.87,17.8 17.5,18.5C20.67,17.5 23,14.5 23,11C23,6.58 19.42,3 15,3C13.83,3 12.8,3.3 12,4C11.2,3.3 10.17,3 9,3H12Z"/></svg>
-                    Huellas
-                </div>
-                <span class="brand-conectadas">Conectadas</span>
-            </div>
-            <p class="login-subtitle">Sistema de Registro en la Nube - Osorno</p>
-            
-            <button class="role-btn btn-user-entry" onclick="entrarComoUsuario()">Entrar como Usuario / Vecino</button>
-            <button class="role-btn btn-admin-entry" onclick="mostrarLoginAdmin()">Entrar como Administrador</button>
-            
-            <div id="adminLoginForm">
-                <input type="password" id="adminPassword" placeholder="Contraseña de Administrador">
-                <div id="loginError" class="error-msg">Contraseña incorrecta</div>
-                <button class="role-btn btn-user-entry" onclick="verificarAdmin()">Verificar Acceso</button>
-            </div>
-        </div>
-    </div>
-
-    <header id="mainHeader" style="display:none;">
-        <div class="brand-logo">
-            <div class="paw-badge" style="font-size: 1rem; padding: 6px 12px 6px 36px;">
-                <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; left: 8px;"><path d="M12,3C7.58,3 4,6.58 4,11C4,14.5 6.33,17.5 9.5,18.5C9.33,17.8 9.2,17 9.2,16.2C9.2,13.8 11.2,11.8 13.6,11.8C16,11.8 18,13.8 18,16.2C18,17 17.87,17.8 17.5,18.5C20.67,17.5 23,14.5 23,11C23,6.58 19.42,3 15,3C13.83,3 12.8,3.3 12,4C11.2,3.3 10.17,3 9,3H12Z"/></svg>
-                Huellas
-            </div>
-            <span class="brand-conectadas" style="font-size: 1.1rem;">Osorno</span>
-        </div>
-        <nav>
-            <span id="roleBadge" class="role-badge">Rol</span>
-            <button class="nav-btn active" onclick="switchSection('registro', this)">Registrar Mascota</button>
-            <button class="nav-btn" onclick="switchSection('catalogo', this)">Catálogo en la Nube</button>
-            <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
-        </nav>
-    </header>
-
-    <div class="container" id="mainContainer" style="display:none;">
-        
-        <div id="section-registro" class="section active">
-            <h3 class="section-title">Registro de Mascota (Base de Datos Cloud)</h3>
-            <form id="mascotaForm" onsubmit="guardarMascota(event)">
-                <div class="form-grid">
-                    
-                    <div class="tenencia-selector">
-                        <div class="tenencia-option active" id="optCasa" onclick="setTenencia('Dueño en Casa')">Dueño en Casa (Particular)</div>
-                        <div class="tenencia-option" id="optComunitario" onclick="setTenencia('Comunitario / Callejero')">Comunitario / Cuidado Vecinal</div>
-                    </div>
-                    <input type="hidden" id="tipoTenencia" value="Dueño en Casa">
-
-                    <div class="form-group">
-                        <label>Nombre de la Mascota</label>
-                        <input type="text" id="nombre" required placeholder="Ej: Firulais">
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo de Animal</label>
-                        <select id="tipo">
-                            <option value="Perro">Perro</option>
-                            <option value="Gato">Gato</option>
-                            <option value="Otro">Otro</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Raza</label>
-                        <input type="text" id="raza" placeholder="Ej: Mestizo / Poodle">
-                    </div>
-                    <div class="form-group">
-                        <label>Sector / Barrio en Osorno</label>
-                        <input type="text" id="sector" required placeholder="Ej: Rahue Alto, Francke...">
-                    </div>
-
-                    <div class="sub-grid" id="camposDueño">
-                        <div class="form-group">
-                            <label>Nombre del Propietario</label>
-                            <input type="text" id="propietario" placeholder="Nombre y Apellido">
-                        </div>
-                        <div class="form-group">
-                            <label>Teléfono de Contacto</label>
-                            <input type="tel" id="telefono" placeholder="+56 9 ...">
-                        </div>
-                    </div>
-
-                    <div class="sub-grid" id="camposComunitario" style="display:none;">
-                        <div class="form-group">
-                            <label>Referencia de Ubicación</label>
-                            <input type="text" id="referenciaComun" placeholder="Ej: Afuera del almacén">
-                        </div>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label>Fotografía de la Mascota</label>
-                        <div class="photo-upload-box" onclick="document.getElementById('fotoInput').click()">
-                            <span>📷 Toca aquí para tomar una foto o subir desde tu dispositivo</span>
-                            <input type="file" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
-                            <br>
-                            <img id="fotoPreview" alt="Vista previa">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-submit full-width">Guardar y Registrar Mascota</button>
-                </div>
-            </form>
-        </div>
-
-        <div id="section-catalogo" class="section">
-            <h3 class="section-title">Catálogo Global de Mascotas</h3>
-            
-            <div class="filters">
-                <div class="form-group">
-                    <label>Buscar por nombre</label>
-                    <input type="text" id="searchNombre" placeholder="Buscar..." oninput="filtrarMascotas()">
-                </div>
-                <div class="form-group">
-                    <label>Filtrar por Tipo</label>
-                    <select id="filterTipo" onchange="filtrarMascotas()">
-                        <option value="">Todos</option>
-                        <option value="Perro">Perro</option>
-                        <option value="Gato">Gato</option>
-                        <option value="Otro">Otro</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Filtrar por Sector</label>
-                    <input type="text" id="filterSector" placeholder="Ej: Rahue..." oninput="filtrarMascotas()">
-                </div>
-            </div>
-
-            <div class="animals-grid" id="animalsGrid">
-                <!-- Se llenará dinámicamente con Firebase -->
-            </div>
-        </div>
-
-    </div>
-</body>
-</html>
+        input, select, textarea {
+            padding: 11px 14px;
+            border: 1.5px solid #dce4ec;
+            border-radius: 10px;
+            font-size: 0.95rem;
+      
