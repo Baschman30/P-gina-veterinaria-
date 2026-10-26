@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Huellas Conectadas - Osorno</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
     <style>
         :root {
             --primary: #1e3d59;
@@ -76,7 +81,6 @@
             padding: 20px;
         }
 
-        /* Botón sobrio Administrador en esquina superior derecha */
         .top-right-admin {
             position: absolute;
             top: 22px;
@@ -99,7 +103,6 @@
             border-color: rgba(255, 255, 255, 0.5);
         }
 
-        /* Engranaje discreto en esquina inferior derecha */
         .bottom-right-gear {
             position: absolute;
             bottom: 22px;
@@ -270,7 +273,7 @@
             margin-bottom: 24px;
         }
 
-        /* --- SELECTOR DE CONDICIÓN (CASA VS COMUNITARIO) --- */
+        /* --- SELECTOR DE CONDICIÓN --- */
         .tenencia-selector {
             grid-column: 1 / -1;
             display: flex;
@@ -501,7 +504,7 @@
         .stat-bar { height: 100%; background: var(--teal); border-radius: 8px; transition: width 0.4s ease; }
         .stat-item { margin-bottom: 16px; font-weight: 600; font-size: 0.95rem; }
 
-        /* --- GESTIÓN DE CREDENCIALES (PANEL ENGRANAJE) --- */
+        /* --- GESTIÓN DE CREDENCIALES --- */
         .master-credential-card {
             background: #fff9f5;
             border: 2px solid var(--accent);
@@ -561,17 +564,13 @@
 
     <!-- PANTALLA DE BIENVENIDA -->
     <div id="loginOverlay">
-        <!-- Esquina Superior Derecha: Botón sobrio Administrador -->
         <button class="top-right-admin" onclick="switchLoginView('admin')">Administrador</button>
-
-        <!-- Esquina Inferior Derecha: Ícono de engranaje discreto -->
         <button class="bottom-right-gear" onclick="switchLoginView('gear')" title="Configuración de accesos">
             <svg viewBox="0 0 24 24">
                 <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
             </svg>
         </button>
 
-        <!-- Recuadro Central -->
         <div class="login-card">
             <div class="brand-logo">
                 <div class="paw-badge">
@@ -583,13 +582,11 @@
                 <span class="brand-conectadas">Conectadas</span>
             </div>
 
-            <!-- VISTA 1: BIENVENIDA AL USUARIO -->
             <div id="userWelcomeView">
                 <p class="login-subtitle">Plataforma comunitaria de registro, búsqueda y retorno de mascotas en la ciudad de Osorno.</p>
                 <button class="role-btn btn-user-entry" onclick="enterAsUser()">🐾 Ingresar a la Plataforma</button>
             </div>
 
-            <!-- VISTA 2: ACCESO ADMINISTRADOR -->
             <form id="adminLoginForm" class="login-subform" onsubmit="loginAdmin(event)">
                 <h4>Acceso Administrador</h4>
                 <div class="error-msg" id="loginError">Usuario o contraseña incorrectos.</div>
@@ -601,7 +598,6 @@
                 <a class="back-link" onclick="switchLoginView('user')">← Volver al inicio</a>
             </form>
 
-            <!-- VISTA 3: CONFIGURACIÓN INTERNA (ENGRANAJE) -->
             <form id="gearLoginForm" class="login-subform" onsubmit="loginGearAdmin(event)">
                 <h4>⚙️ Control de Credenciales</h4>
                 <div class="error-msg" id="gearLoginError">Credenciales maestras incorrectas.</div>
@@ -637,11 +633,10 @@
     </header>
 
     <div class="container">
-        <!-- SECCIÓN 1: INGRESO DE MASCOTAS -->
+        <!-- SECCIÓN 1: INGRESO -->
         <section id="ingreso" class="section active">
             <h3 class="section-title">Registrar Animal en el Sistema</h3>
             <form id="animalForm" class="form-grid">
-                
                 <div class="tenencia-selector">
                     <div class="tenencia-option active" id="optCasa" onclick="setTenencia('De Casa')">
                         🏠 Mascota de Casa (Con Dueño)
@@ -702,7 +697,7 @@
 
                 <div class="form-group full-width">
                     <label>Comentarios / Condición Médica o Especial</label>
-                    <textarea id="comentarios" placeholder="Ej: Necesita medicamentos diarios, tiene una alergia, cojea de una patita, lleva collar rojo o es asustadizo..." required></textarea>
+                    <textarea id="comentarios" placeholder="Ej: Necesita medicamentos diarios, tiene una alergia, cojea de una patita..." required></textarea>
                 </div>
 
                 <div class="form-group full-width">
@@ -715,42 +710,35 @@
                     </label>
                 </div>
 
-                <!-- BLOQUE CONDICIONAL 1: MASCOTA DE CASA -->
                 <div id="bloqueDueno" class="sub-grid">
                     <h4 class="full-width" style="margin: 10px 0 0 0; color:var(--primary); border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
                         Datos del Propietario
                     </h4>
-
                     <div class="form-group">
                         <label>Nombre del Dueño</label>
                         <input type="text" id="nombreDueno" placeholder="Nombre y Apellido" required>
                     </div>
-
                     <div class="form-group">
                         <label>RUT del Dueño (🔒 Privado)</label>
                         <input type="text" id="rut" placeholder="Ej: 12.345.678-9" required>
                     </div>
-
                     <div class="form-group">
                         <label>Teléfono de Contacto</label>
                         <input type="tel" id="telefono" placeholder="+56912345678" required>
                     </div>
-
                     <div class="form-group">
                         <label>Dirección Exacta (🔒 Privada)</label>
                         <input type="text" id="direccion" placeholder="Ej: Los Carrera 1234" required>
                     </div>
                 </div>
 
-                <!-- BLOQUE CONDICIONAL 2: ANIMAL COMUNITARIO -->
                 <div id="bloqueComunitario" class="sub-grid" style="display:none;">
                     <h4 class="full-width" style="margin: 10px 0 0 0; color:var(--primary); border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
                         Ubicación del Animal Comunitario / Callejero
                     </h4>
-
                     <div class="form-group full-width">
                         <label>Lugar que frecuenta</label>
-                        <input type="text" id="lugarFrecuente" placeholder="Ej: Afuera del supermercado de Rahue, Plaza de Armas, Feria Libre...">
+                        <input type="text" id="lugarFrecuente" placeholder="Ej: Afuera del supermercado, Plaza de Armas...">
                     </div>
                 </div>
 
@@ -763,7 +751,7 @@
             </form>
         </section>
 
-        <!-- SECCIÓN 2: BUSCADOR Y BASE DE DATOS -->
+        <!-- SECCIÓN 2: BUSCADOR -->
         <section id="buscador" class="section">
             <h3 class="section-title">Directorio y Buscador de Animales</h3>
             <div class="filters">
@@ -788,29 +776,21 @@
             <div id="animalGrid" class="animal-grid"></div>
         </section>
 
-        <!-- SECCIÓN 3: ESTADÍSTICAS (SOLO ADMIN) -->
+        <!-- SECCIÓN 3: ESTADÍSTICAS -->
         <section id="estadisticas" class="section">
             <h3 class="section-title">Panel Estadístico de Control (Administrador)</h3>
-            <p style="color:var(--muted); margin-top:-10px; margin-bottom:20px;">Distribución matemática porcentual calculada en tiempo real a partir de la matriz de registros.</p>
+            <p style="color:var(--muted); margin-top:-10px; margin-bottom:20px;">Distribución matemática porcentual en tiempo real desde Firestore.</p>
             <div class="stats-grid">
                 <div class="stat-box" id="statsEspecies"></div>
                 <div class="stat-box" id="statsSectores"></div>
             </div>
         </section>
 
-        <!-- SECCIÓN 4: VISTA EXCLUSIVA DEL ENGRANAJE (CREDencial MAESTRA + PERFILES ADMIN) -->
+        <!-- SECCIÓN 4: CONFIGURACIÓN -->
         <section id="credentialControlPanel" class="section">
             <h3 class="section-title">⚙️ Configuración de Accesos y Credenciales</h3>
-            <p style="color:var(--muted); margin-top:-12px; margin-bottom:20px;">
-                Desde aquí puedes personalizar tu acceso maestro (perfil único del engranaje) y administrar las cuentas del equipo de administradores.
-            </p>
-
-            <!-- PERFIL ÚNICO: CREDENCIAL MAESTRA DEL ENGRANAJE -->
             <div class="master-credential-card">
-                <h4 style="margin-top:0; color:var(--accent);">🔒 Credencial Maestra (Acceso Engranaje - Perfil Único)</h4>
-                <p style="font-size:0.88rem; color:var(--muted); margin-top:-8px; margin-bottom:14px;">
-                    Por defecto es <strong>superadmin</strong> / <strong>super1234</strong>. Puedes personalizar el usuario y la clave aquí cuando quieras:
-                </p>
+                <h4 style="margin-top:0; color:var(--accent);">🔒 Credencial Maestra (Acceso Engranaje)</h4>
                 <form class="form-grid" onsubmit="guardarCambiosMaster(event)">
                     <div class="form-group">
                         <label>Usuario Maestro</label>
@@ -826,7 +806,6 @@
                 </form>
             </div>
 
-            <!-- CREAR NUEVOS PERFILES DE ADMIN NORMAL -->
             <div class="gear-create-card">
                 <h4 style="margin-top:0; color:var(--primary);">➕ Crear Nuevo Perfil de Administrador</h4>
                 <form id="createAdminForm" class="form-grid" onsubmit="crearNuevoAdmin(event)">
@@ -844,12 +823,12 @@
                 </form>
             </div>
 
-            <h4 style="color:var(--primary); margin-bottom:12px;">🔑 Administradores Registrados (Editar Nombre o Clave)</h4>
+            <h4 style="color:var(--primary); margin-bottom:12px;">🔑 Administradores Registrados</h4>
             <div id="adminListContainer" class="admin-list"></div>
         </section>
     </div>
 
-    <!-- MODAL DE INFORMACIÓN DE LA MASCOTA -->
+    <!-- MODAL -->
     <div id="animalModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
@@ -863,25 +842,34 @@
                 <p style="margin:5px 0;"><strong>Raza:</strong> <span id="modalRaza"></span></p>
                 <p style="margin:5px 0;"><strong>Edad / Tamaño:</strong> <span id="modalEdadTamano"></span></p>
                 <p style="margin:5px 0;"><strong>Vacunas al día:</strong> <span id="modalVacunas"></span></p>
-                
                 <div class="comment-box">
                     <strong>🩺 Comentarios / Condición:</strong><br>
                     <span id="modalComentarios"></span>
                 </div>
-
                 <hr style="border:none; border-top:1px solid #eee; margin:14px 0;">
-                
                 <div id="modalInfoUbicacion"></div>
-                
                 <div class="action-btns">
                     <a id="btnCall" href="#" class="btn-call">📞 Llamar al Dueño</a>
-                    <a id="btnMap" href="#" target="_blank" class="btn-map">🗺️ Ver Ubicación en Maps (Admin)</a>
+                    <a id="btnMap" href="#" target="_blank" class="btn-map">🗺️ Ver Ubicación en Maps</a>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // --- CONFIGURACIÓN DE FIREBASE (TUS DATOS EXACTOS) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrG0MGF_LBNvKww5ERburB_cnmrer0GAw",
+            authDomain: "huellasweb-5e0d1.firebaseapp.com",
+            projectId: "huellasweb-5e0d1",
+            storageBucket: "huellasweb-5e0d1.firebasestorage.app",
+            messagingSenderId: "369704430440",
+            appId: "1:369704430440:web:f4dfe51ea2c98fa5004dd"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         const sectoresOsorno = [
             "Centro", "Sector Oriente", "Rahue Bajo", "Rahue Alto Norte", "Rahue Alto Sur",
             "Quinto Centenario", "Francke", "Ovejería Bajo", "Ovejería Alto", "Pilauco",
@@ -903,93 +891,37 @@
             "Bengalí", "Esfinge (Sphynx)", "Ragdoll", "Himalayo", "Carey", "Otro"
         ];
 
-        // 1. Credencial Maestra Única (por defecto: superadmin / super1234)
-        let credencialMaestra = JSON.parse(localStorage.getItem("hc_master")) || {
-            user: "superadmin",
-            pass: "super1234"
-        };
+        let credencialMaestra = JSON.parse(localStorage.getItem("hc_master")) || { user: "superadmin", pass: "super1234" };
+        function guardarMasterStorage() { localStorage.setItem("hc_master", JSON.stringify(credencialMaestra)); }
 
-        function guardarMasterStorage() {
-            localStorage.setItem("hc_master", JSON.stringify(credencialMaestra));
-        }
+        let perfilesAdmin = JSON.parse(localStorage.getItem("hc_admins")) || [{ id: 1, user: "admin", pass: "1234" }];
+        function guardarAdminsStorage() { localStorage.setItem("hc_admins", JSON.stringify(perfilesAdmin)); }
 
-        // 2. Perfiles de Administrador Normal (por defecto: admin / 1234)
-        let perfilesAdmin = JSON.parse(localStorage.getItem("hc_admins")) || [
-            { id: 1, user: "admin", pass: "1234" }
-        ];
+        let animales = []; // Se llena desde Firestore en tiempo real
 
-        function guardarAdminsStorage() {
-            localStorage.setItem("hc_admins", JSON.stringify(perfilesAdmin));
-        }
-
-        // 3. Base de datos de animales (con persistencia en navegador)
-        const animalesIniciales = [
-            {
-                id: 1,
-                tenencia: "De Casa",
-                nombre: "Max",
-                especie: "Perro",
-                raza: "Mestizo (Quiltro)",
-                tamano: "Mediano",
-                edad: "3 años",
-                vacunas: "Sí",
-                comentarios: "Es muy dócil, toma medicación diaria para la epilepsia. Lleva collar azul.",
-                foto: "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=600",
-                dueno: "Juan Pérez",
-                rut: "15.432.198-K",
-                telefono: "+56912345678",
-                direccion: "Los Melies 452",
-                lugarFrecuente: "",
-                sector: "Francke"
-            },
-            {
-                id: 2,
-                tenencia: "De Casa",
-                nombre: "Luna",
-                especie: "Gato",
-                raza: "Romano (Atigrado)",
-                tamano: "Pequeño",
-                edad: "1 año",
-                vacunas: "Sí",
-                comentarios: "Esterilizada, se asusta con ruidos fuertes. No requiere medicamentos.",
-                foto: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600",
-                dueno: "Ana Silva",
-                rut: "18.765.432-1",
-                telefono: "+56987654321",
-                direccion: "Av. Real 1020",
-                lugarFrecuente: "",
-                sector: "Rahue Alto Norte"
-            },
-            {
-                id: 3,
-                tenencia: "Comunitario",
-                nombre: "Don Goyo",
-                especie: "Perro",
-                raza: "Mestizo (Quiltro)",
-                tamano: "Grande",
-                edad: "6 años aprox.",
-                vacunas: "Sí",
-                comentarios: "Perro comunitario cuidado por los locatarios. Cojea levemente de una pata trasera, usa capa térmica en invierno.",
-                foto: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600",
-                dueno: "",
-                rut: "",
-                telefono: "",
-                direccion: "",
-                lugarFrecuente: "Entrada principal de la Feria Libre de Rahue y panadería vecina",
-                sector: "Rahue Bajo"
-            }
-        ];
-
-        let animales = JSON.parse(localStorage.getItem("hc_animales")) || animalesIniciales;
-
-        function guardarAnimalesStorage() {
-            localStorage.setItem("hc_animales", JSON.stringify(animales));
-        }
-
-        let rolActual = "usuario"; // 'usuario', 'admin', 'control'
+        let rolActual = "usuario";
         let adminActivoNombre = "";
         let tenenciaActual = "De Casa";
         let fotoBase64Actual = "";
+
+        // --- CARGAR DATOS EN TIEMPO REAL DESDE FIRESTORE ---
+        function cargarAnimalesDesdeFirebase() {
+            db.collection("animales").onSnapshot((snapshot) => {
+                animales = [];
+                snapshot.forEach((doc) => {
+                    let data = doc.data();
+                    data.id = doc.id;
+                    animales.push(data);
+                });
+
+                if (document.getElementById("buscador").classList.contains("active")) {
+                    renderAnimals();
+                }
+                if (document.getElementById("estadisticas").classList.contains("active")) {
+                    calculateStats();
+                }
+            });
+        }
 
         window.onload = function() {
             const selectIngreso = document.getElementById("sector");
@@ -999,9 +931,9 @@
                 selectFiltro.innerHTML += `<option value="${sec}">${sec}</option>`;
             });
             updateFilterBreeds();
+            cargarAnimalesDesdeFirebase();
         };
 
-        // --- VISTAS DE LA PANTALLA DE INICIO ---
         function switchLoginView(vista) {
             document.getElementById("userWelcomeView").style.display = vista === "user" ? "block" : "none";
             document.getElementById("adminLoginForm").style.display = vista === "admin" ? "block" : "none";
@@ -1020,7 +952,6 @@
             e.preventDefault();
             const user = document.getElementById("adminUser").value.trim();
             const pass = document.getElementById("adminPass").value.trim();
-            
             const cuentaValida = perfilesAdmin.find(p => p.user === user && p.pass === pass);
             if (cuentaValida) {
                 rolActual = "admin";
@@ -1038,7 +969,6 @@
             e.preventDefault();
             const user = document.getElementById("gearUser").value.trim();
             const pass = document.getElementById("gearPass").value.trim();
-
             if (user === credencialMaestra.user && pass === credencialMaestra.pass) {
                 rolActual = "control";
                 document.getElementById("gearLoginError").style.display = "none";
@@ -1072,11 +1002,9 @@
                 document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
                 document.getElementById("credentialControlPanel").classList.add("active");
                 
-                // Cargar datos actuales del perfil maestro único
                 document.getElementById("masterEditUser").value = credencialMaestra.user;
                 document.getElementById("masterEditPass").value = credencialMaestra.pass;
                 renderAdminProfiles();
-
             } else if (rolActual === "admin") {
                 badge.textContent = `🔑 Admin: ${adminActivoNombre}`;
                 badge.style.background = "#e74c3c";
@@ -1084,7 +1012,6 @@
                 btnBuscador.style.display = "inline-block";
                 btnStats.style.display = "inline-block";
                 showSection("buscador");
-
             } else {
                 badge.textContent = "🐾 Comunidad";
                 badge.style.background = "rgba(255,255,255,0.15)";
@@ -1095,25 +1022,15 @@
             }
         }
 
-        // --- ACTUALIZAR CREDENCIAL MAESTRA ÚNICA ---
         function guardarCambiosMaster(e) {
             e.preventDefault();
-            const nuevoMasterUser = document.getElementById("masterEditUser").value.trim();
-            const nuevoMasterPass = document.getElementById("masterEditPass").value.trim();
-
-            if (!nuevoMasterUser || !nuevoMasterPass) {
-                alert("El usuario y la clave maestra no pueden quedar vacíos.");
-                return;
-            }
-
-            credencialMaestra.user = nuevoMasterUser;
-            credencialMaestra.pass = nuevoMasterPass;
+            credencialMaestra.user = document.getElementById("masterEditUser").value.trim();
+            credencialMaestra.pass = document.getElementById("masterEditPass").value.trim();
             guardarMasterStorage();
             document.getElementById("roleIndicator").textContent = `⚙️ Control (${credencialMaestra.user})`;
-            alert(`¡Acceso maestro actualizado! Ahora ingresarás al engranaje con el usuario "${nuevoMasterUser}".`);
+            alert("¡Acceso maestro actualizado con éxito!");
         }
 
-        // --- CAMBIAR ENTRE MASCOTA DE CASA Y COMUNITARIO ---
         function setTenencia(tipo) {
             tenenciaActual = tipo;
             const optCasa = document.getElementById("optCasa");
@@ -1141,25 +1058,17 @@
             }
         }
 
-        // --- GESTIÓN DE ADMINISTRADORES NORMALES ---
         function renderAdminProfiles() {
             const container = document.getElementById("adminListContainer");
             container.innerHTML = "";
-
             perfilesAdmin.forEach(p => {
                 const row = document.createElement("div");
                 row.className = "admin-row";
                 row.innerHTML = `
-                    <div class="form-group">
-                        <label>Nombre de Usuario</label>
-                        <input type="text" id="editUser_${p.id}" value="${p.user}">
-                    </div>
-                    <div class="form-group">
-                        <label>Contraseña</label>
-                        <input type="text" id="editPass_${p.id}" value="${p.pass}">
-                    </div>
+                    <div class="form-group"><label>Usuario</label><input type="text" id="editUser_${p.id}" value="${p.user}"></div>
+                    <div class="form-group"><label>Contraseña</label><input type="text" id="editPass_${p.id}" value="${p.pass}"></div>
                     <div style="display:flex; gap:8px; margin-top:20px;">
-                        <button class="btn-save-admin" onclick="guardarCambiosAdmin(${p.id})">💾 Guardar Cambios</button>
+                        <button class="btn-save-admin" onclick="guardarCambiosAdmin(${p.id})">💾</button>
                         <button class="btn-del-admin" onclick="eliminarAdmin(${p.id})">🗑️</button>
                     </div>
                 `;
@@ -1171,82 +1080,46 @@
             e.preventDefault();
             const nuevoUser = document.getElementById("newAdminUser").value.trim();
             const nuevoPass = document.getElementById("newAdminPass").value.trim();
-
-            if (perfilesAdmin.some(a => a.user.toLowerCase() === nuevoUser.toLowerCase())) {
-                alert("Ese nombre de usuario ya existe. Elige otro diferente.");
-                return;
-            }
-
-            perfilesAdmin.push({
-                id: Date.now(),
-                user: nuevoUser,
-                pass: nuevoPass
-            });
+            perfilesAdmin.push({ id: Date.now(), user: nuevoUser, pass: nuevoPass });
             guardarAdminsStorage();
             document.getElementById("createAdminForm").reset();
             renderAdminProfiles();
-            alert(`¡Perfil de administrador "${nuevoUser}" creado con éxito!`);
+            alert(`¡Administrador "${nuevoUser}" creado con éxito!`);
         }
 
         function guardarCambiosAdmin(id) {
-            const nuevoUser = document.getElementById(`editUser_${id}`).value.trim();
-            const nuevoPass = document.getElementById(`editPass_${id}`).value.trim();
-
-            if (!nuevoUser || !nuevoPass) {
-                alert("El usuario y la contraseña no pueden quedar vacíos.");
-                return;
-            }
-
             const adminObj = perfilesAdmin.find(a => a.id === id);
             if (adminObj) {
-                adminObj.user = nuevoUser;
-                adminObj.pass = nuevoPass;
+                adminObj.user = document.getElementById(`editUser_${id}`).value.trim();
+                adminObj.pass = document.getElementById(`editPass_${id}`).value.trim();
                 guardarAdminsStorage();
-                alert(`¡Credenciales actualizadas correctamente para "${nuevoUser}"!`);
+                alert("¡Actualizado correctamente!");
                 renderAdminProfiles();
             }
         }
 
         function eliminarAdmin(id) {
-            if (perfilesAdmin.length <= 1) {
-                alert("Debe existir al menos un perfil de administrador activo.");
-                return;
-            }
-            const adminObj = perfilesAdmin.find(a => a.id === id);
-            if (confirm(`¿Seguro que deseas eliminar el perfil de "${adminObj.user}"?`)) {
-                perfilesAdmin = perfilesAdmin.filter(a => a.id !== id);
-                guardarAdminsStorage();
-                renderAdminProfiles();
-            }
+            if (perfilesAdmin.length <= 1) { alert("Debe existir al menos un administrador."); return; }
+            perfilesAdmin = perfilesAdmin.filter(a => a.id !== id);
+            guardarAdminsStorage();
+            renderAdminProfiles();
         }
 
-        // --- FORMULARIO DINÁMICO DE RAZAS Y FOTOS ---
         function updateBreeds() {
             const especie = document.getElementById("especie").value;
             const razaSelect = document.getElementById("raza");
             razaSelect.innerHTML = "";
             document.getElementById("otraRazaGroup").style.display = "none";
-
             let opciones = especie === "Perro" ? razasPerros : (especie === "Gato" ? razasGatos : []);
             opciones.forEach(r => {
-                const opt = document.createElement("option");
-                opt.value = r;
-                opt.textContent = r;
-                razaSelect.appendChild(opt);
+                razaSelect.innerHTML += `<option value="${r}">${r}</option>`;
             });
         }
 
         function checkOtraRaza() {
             const val = document.getElementById("raza").value;
-            const grupoOtra = document.getElementById("otraRazaGroup");
-            const inputOtra = document.getElementById("otraRazaInput");
-            if (val === "Otro") {
-                grupoOtra.style.display = "flex";
-                inputOtra.required = true;
-            } else {
-                grupoOtra.style.display = "none";
-                inputOtra.required = false;
-            }
+            document.getElementById("otraRazaGroup").style.display = val === "Otro" ? "flex" : "none";
+            document.getElementById("otraRazaInput").required = val === "Otro";
         }
 
         function previewPhoto(event) {
@@ -1262,7 +1135,8 @@
             reader.readAsDataURL(file);
         }
 
-        document.getElementById("animalForm").addEventListener("submit", function(e) {
+        // --- GUARDAR EN FIRESTORE ---
+        document.getElementById("animalForm").addEventListener("submit", async function(e) {
             e.preventDefault();
             let razaSeleccionada = document.getElementById("raza").value;
             if (razaSeleccionada === "Otro") {
@@ -1270,7 +1144,6 @@
             }
 
             const nuevoAnimal = {
-                id: Date.now(),
                 tenencia: tenenciaActual,
                 nombre: document.getElementById("nombreMascota").value.trim(),
                 especie: document.getElementById("especie").value,
@@ -1288,18 +1161,21 @@
                 sector: document.getElementById("sector").value
             };
 
-            animales.push(nuevoAnimal);
-            guardarAnimalesStorage();
-            alert("¡Registro guardado exitosamente en Huellas Conectadas!");
-            this.reset();
-            fotoBase64Actual = "";
-            document.getElementById("fotoPreview").style.display = "none";
-            setTenencia("De Casa");
-            updateBreeds();
-            showSection("buscador");
+            try {
+                await db.collection("animales").add(nuevoAnimal);
+                alert("¡Registro guardado exitosamente en la nube de Huellas Conectadas!");
+                this.reset();
+                fotoBase64Actual = "";
+                document.getElementById("fotoPreview").style.display = "none";
+                setTenencia("De Casa");
+                updateBreeds();
+                showSection("buscador");
+            } catch (error) {
+                console.error("Error al guardar: ", error);
+                alert("Hubo un error al guardar en la base de datos.");
+            }
         });
 
-        // --- NAVEGACIÓN ---
         function showSection(id) {
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -1311,15 +1187,12 @@
             if (id === 'estadisticas') calculateStats();
         }
 
-        // --- BUSCADOR Y FILTROS ---
         function updateFilterBreeds() {
             const esp = document.getElementById("filtroEspecie").value;
             const selectRaza = document.getElementById("filtroRaza");
             selectRaza.innerHTML = `<option value="Todas">Todas las razas</option>`;
             let lista = esp === "Perro" ? razasPerros : (esp === "Gato" ? razasGatos : [...new Set([...razasPerros, ...razasGatos])]);
-            lista.forEach(r => {
-                selectRaza.innerHTML += `<option value="${r}">${r}</option>`;
-            });
+            lista.forEach(r => { selectRaza.innerHTML += `<option value="${r}">${r}</option>`; });
         }
 
         function renderAnimals() {
@@ -1341,7 +1214,7 @@
             });
 
             if (filtrados.length === 0) {
-                grid.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color:var(--muted);">No se encontraron animales con esos filtros.</p>`;
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color:var(--muted);">No se encontraron animales registrados.</p>`;
                 return;
             }
 
@@ -1354,7 +1227,7 @@
                 const badgeText = a.tenencia === "De Casa" ? "🏠 De Casa" : "🐾 Comunitario";
 
                 card.innerHTML = `
-                    <div class="card-clickable" onclick="openModal(${a.id})">
+                    <div class="card-clickable" onclick="openModal('${a.id}')">
                         <img src="${a.foto}" alt="${a.nombre}">
                         <div class="card-content">
                             <div class="badges-row">
@@ -1366,23 +1239,25 @@
                             <p style="margin:8px 0 0 0; font-size:0.85rem; font-weight:700; color:var(--teal);">📍 ${a.sector}</p>
                         </div>
                     </div>
-                    ${esModoAdmin ? `<button class="btn-delete-card" onclick="deleteAnimal(${a.id})">🗑️ Eliminar registro</button>` : ''}
+                    ${esModoAdmin ? `<button class="btn-delete-card" onclick="deleteAnimal('${a.id}')">🗑️ Eliminar registro</button>` : ''}
                 `;
                 grid.appendChild(card);
             });
         }
 
-        function deleteAnimal(id) {
+        // --- ELIMINAR DE FIRESTORE ---
+        async function deleteAnimal(id) {
             const animal = animales.find(a => a.id === id);
             if (confirm(`¿Estás seguro de eliminar a "${animal.nombre}" de la base de datos?`)) {
-                animales = animales.filter(a => a.id !== id);
-                guardarAnimalesStorage();
-                renderAnimals();
-                calculateStats();
+                try {
+                    await db.collection("animales").doc(id).delete();
+                } catch (error) {
+                    console.error("Error al eliminar: ", error);
+                    alert("No se pudo eliminar el registro.");
+                }
             }
         }
 
-        // --- MODAL DE DETALLE (RUT Y DIRECCIÓN OCULTOS PARA COMUNIDAD) ---
         function openModal(id) {
             const a = animales.find(x => x.id === id);
             if (!a) return;
@@ -1429,7 +1304,6 @@
                 infoContainer.innerHTML = htmlInfo;
                 btnCall.href = `tel:${a.telefono}`;
                 btnCall.style.display = "inline-block";
-
             } else {
                 let htmlInfo = `
                     <p style="margin:6px 0;"><strong>Sector:</strong> 📍 ${a.sector}, Osorno</p>
@@ -1454,7 +1328,6 @@
             document.getElementById("animalModal").style.display = "none";
         }
 
-        // --- ESTADÍSTICAS MATEMÁTICAS ---
         function calculateStats() {
             const total = animales.length;
             const boxEsp = document.getElementById("statsEspecies");
