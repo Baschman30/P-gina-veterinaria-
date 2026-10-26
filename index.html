@@ -1123,14 +1123,47 @@
         }
 
         function previewPhoto(event) {
+           function previewPhoto(event) {
             const file = event.target.files[0];
             if (!file) return;
+
             const reader = new FileReader();
             reader.onload = function(e) {
-                fotoBase64Actual = e.target.result;
-                const img = document.getElementById("fotoPreview");
-                img.src = fotoBase64Actual;
-                img.style.display = "inline-block";
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Reducir dimensiones máximas a 500px para que pese poco
+                    const MAX_WIDTH = 500;
+                    const MAX_HEIGHT = 500;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Comprimir a JPEG con calidad del 70%
+                    fotoBase64Actual = canvas.toDataURL('image/jpeg', 0.7);
+
+                    const previewImg = document.getElementById("fotoPreview");
+                    previewImg.src = fotoBase64Actual;
+                    previewImg.style.display = "inline-block";
+                }
             };
             reader.readAsDataURL(file);
         }
