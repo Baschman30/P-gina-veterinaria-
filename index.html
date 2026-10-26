@@ -1122,8 +1122,7 @@
             document.getElementById("otraRazaInput").required = val === "Otro";
         }
 
-        function previewPhoto(event) {
-           function previewPhoto(event) {
+function previewPhoto(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -1153,6 +1152,20 @@
                         }
                     }
 
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Comprimir a JPEG con calidad del 70%
+                    fotoBase64Actual = canvas.toDataURL('image/jpeg', 0.7);
+
+                    const previewImg = document.getElementById("fotoPreview");
+                    previewImg.src = fotoBase64Actual;
+                    previewImg.style.display = "inline-block";
+                };
+            };
+            reader.readAsDataURL(file);
+        }
                     canvas.width = width;
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
