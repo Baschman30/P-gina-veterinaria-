@@ -1134,7 +1134,6 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // Reducir dimensiones máximas a 500px para que pese poco
                     const MAX_WIDTH = 500;
                     const MAX_HEIGHT = 500;
                     let width = img.width;
@@ -1156,27 +1155,12 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Comprimir a JPEG con calidad del 70%
                     fotoBase64Actual = canvas.toDataURL('image/jpeg', 0.7);
 
                     const previewImg = document.getElementById("fotoPreview");
                     previewImg.src = fotoBase64Actual;
                     previewImg.style.display = "inline-block";
                 };
-            };
-            reader.readAsDataURL(file);
-        }
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // Comprimir a JPEG con calidad del 70%
-                    fotoBase64Actual = canvas.toDataURL('image/jpeg', 0.7);
-
-                    const previewImg = document.getElementById("fotoPreview");
-                    previewImg.src = fotoBase64Actual;
-                    previewImg.style.display = "inline-block";
-                }
             };
             reader.readAsDataURL(file);
         }
